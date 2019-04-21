@@ -378,11 +378,18 @@ namespace csharp_test_client
         private void button4_Click(object sender, EventArgs e)
         {
             var lobbyEnterReq = new LobbyEnterReqPacket();
-            lobbyEnterReq.SetValue(Convert.ToInt32(listBoxLobby.GetItemText(listBoxLobby.SelectedItem)));
+            
+
+            // TODO 문자열 떼기.. -예외처리 필요
+            string[] LobbyListInfoStr = listBoxLobby.GetItemText(listBoxLobby.SelectedItem).Split(',');
+            string[] LobbyIndexStr = LobbyListInfoStr[0].Split(':');
+
+            lobbyEnterReq.SetValue(Convert.ToInt32(LobbyIndexStr[1].Replace(" ", "")));
 
             PostSendPacket(PACKET_ID.LOBBY_ENTER_REQ, lobbyEnterReq.ToBytes());
             //DevLog.Write($"로비 입장 요청");
-            DevLog.Write($"로비 입장 요청:  {Convert.ToInt32(listBoxLobby.GetItemText(listBoxLobby.SelectedItem))} 번");
+
+            DevLog.Write($"로비 입장 요청:  {listBoxLobby.GetItemText(listBoxLobby.SelectedItem)}");
         }
 
         // 로비 나가기 요청

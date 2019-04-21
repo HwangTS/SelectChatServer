@@ -71,6 +71,9 @@ namespace csharp_test_client
             return true;
         }
     }
+    
+
+
 
     // LobbyList
     public class LobbyListReqPacket
@@ -82,10 +85,7 @@ namespace csharp_test_client
         public Int16 Result;
         public short LobbyCount;
 
-
-        public List<Int16> lobbyListinfo = new List<Int16>();
-
-        //LobbyListInfo[] lobbyListinfo = new LobbyListInfo[PacketDef.MAX_LOBBY_LIST_COUNT_BYTE_LENGTH];
+        public LobbyListInfo[] lobbyListinfo = new LobbyListInfo[PacketDef.MAX_LOBBY_LIST_COUNT_BYTE_LENGTH];
 
         public bool FromBytes(byte[] bodyData)
         {
@@ -101,9 +101,18 @@ namespace csharp_test_client
             for(int i = 0; i < LobbyCount; i++)
             {
                 var lobbyId = (SByte)bodyData[readPos];
-                readPos += 6;
+                readPos += 2;
+                
+                var lobbyUserCount = (SByte)bodyData[readPos];
+                readPos += 2;
 
-                lobbyListinfo.Add(lobbyId);
+                var lobbyMaxUserCount = (SByte)bodyData[readPos];
+                readPos += 2;
+
+                LobbyListInfo temp = new LobbyListInfo();
+                temp.SetValue(lobbyId, lobbyUserCount, lobbyMaxUserCount);
+
+                lobbyListinfo[i] = temp;
             }
 
             return true;
@@ -179,13 +188,6 @@ namespace csharp_test_client
             Result = BitConverter.ToInt16(bodyData, 0);
             RoomUserUniqueId = BitConverter.ToInt32(bodyData, 4);
 
-            //var readPos = 0;
-            //Result = (SByte)bodyData[readPos];
-            //readPos += 2;
-
-            //RoomUserUniqueId = (SByte)bodyData[readPos];
-            //readPos += 4;
-
             return true;
         }
     }
@@ -193,25 +195,23 @@ namespace csharp_test_client
     public class RoomUserListNtfPacket
     {
         public int UserCount = 0;
-        public List<Int64> UserUniqueIdList = new List<Int64>();
+        // public List<Int64> UserUniqueIdList = new List<Int64>();
+        public List<Int32> UserUniqueIdList = new List<Int32>();
         public List<string> UserIDList = new List<string>();
 
         public bool FromBytes(byte[] bodyData)
         {
             var readPos = 0;
-            var userCount = (SByte)bodyData[readPos];
-            ++readPos;
+            var userCount = BitConverter.ToInt32(bodyData, 0);
+            readPos += 4;
 
             for (int i = 0; i < userCount; ++i)
             {
-                var uniqeudId = BitConverter.ToInt64(bodyData, readPos);
-                readPos += 8;
+                var uniqeudId = BitConverter.ToInt16(bodyData, readPos);
+                readPos += 4;
 
-                var idlen = (SByte)bodyData[readPos];
-                ++readPos;
-
-                var id = Encoding.UTF8.GetString(bodyData, readPos, idlen);
-                readPos += idlen;
+                var id = Encoding.UTF8.GetString(bodyData, readPos, PacketDef.MAX_USER_ID_BYTE_LENGTH + 1);
+                readPos += PacketDef.MAX_USER_ID_BYTE_LENGTH + 1;
 
                 UserUniqueIdList.Add(uniqeudId);
                 UserIDList.Add(id);
@@ -237,11 +237,11 @@ namespace csharp_test_client
             UserUniqueId = BitConverter.ToInt32(bodyData, readPos);
             readPos += 4;
 
-            var idlen = (SByte)bodyData[readPos];
-            ++readPos;
+            //var idlen = (SByte)bodyData[readPos];
+            //++readPos;
 
-            UserID = Encoding.UTF8.GetString(bodyData, readPos, idlen);
-            readPos += idlen;
+            UserID = Encoding.UTF8.GetString(bodyData, readPos, PacketDef.MAX_USER_ID_BYTE_LENGTH + 1);
+            readPos += PacketDef.MAX_USER_ID_BYTE_LENGTH + 1;
 
             return true;
         }
@@ -281,14 +281,17 @@ namespace csharp_test_client
 
     public class RoomChatNtfPacket
     {
-        public Int64 UserUniqueId;
+        //public Int64 UserUniqueId;
+        public Int32 UserUniqueId;
         public string Message;
 
         public bool FromBytes(byte[] bodyData)
         {
-            UserUniqueId = BitConverter.ToInt64(bodyData, 0);
+            //UserUniqueId = BitConverter.ToInt64(bodyData, 0);
+            UserUniqueId = BitConverter.ToInt32(bodyData, 0);
 
-            var msgLen = BitConverter.ToInt16(bodyData, 8);
+            //var msgLen = BitConverter.ToInt16(bodyData, 8);
+            var msgLen = BitConverter.ToInt16(bodyData, 4);
             byte[] messageTemp = new byte[msgLen];
             Buffer.BlockCopy(bodyData, 8 + 2, messageTemp, 0, msgLen);
             Message = Encoding.UTF8.GetString(messageTemp);

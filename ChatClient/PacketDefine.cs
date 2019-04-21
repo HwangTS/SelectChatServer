@@ -19,12 +19,25 @@ namespace csharp_test_client
         public const int MAX_ROOM_TITLE_SIZE = 16;
     }
 
-    //struct LobbyListInfo
-    //{
-    //    short LobbyId;
-    //    short LobbyUserCount;
-    //    short LobbyMaxUserCount;
-    //};
+    // - 로비요청 구조체
+    public struct LobbyListInfo
+    {
+        short LobbyId;
+        short LobbyUserCount;
+        short LobbyMaxUserCount;
+
+        public void SetValue(short lobbyId, short lobbyUserCount, short lobbyMaxUserCount)
+        {
+            LobbyId = lobbyId;
+            LobbyUserCount = lobbyUserCount;
+            LobbyMaxUserCount = lobbyMaxUserCount;
+        }
+
+        public string GetValue()
+        {
+            return "Idx : " + LobbyId + ", LUC : " + LobbyUserCount + ", LMUC : " + LobbyMaxUserCount;
+        }
+    };
 
     public enum PACKET_ID : ushort
     {

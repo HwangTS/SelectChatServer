@@ -3,8 +3,11 @@
 #include "PacketID.h"
 #include "ErrorCode.h"
 
+#include <vector>
+#include <string>
+
 namespace NCommon
-{	
+{
 #pragma pack(push, 1)
 	struct PktHeader
 	{
@@ -24,8 +27,8 @@ namespace NCommon
 	const int MAX_USER_PASSWORD_SIZE = 16;
 	struct PktLogInReq
 	{
-		char szID[MAX_USER_ID_SIZE+1] = { 0, };
-		char szPW[MAX_USER_PASSWORD_SIZE+1] = { 0, };
+		char szID[MAX_USER_ID_SIZE + 1] = { 0, };
+		char szPW[MAX_USER_PASSWORD_SIZE + 1] = { 0, };
 	};
 
 	struct PktLogInRes : PktBase
@@ -58,7 +61,7 @@ namespace NCommon
 	{
 		short LobbyId;
 	};
-		
+
 	struct PktLobbyEnterRes : PktBase
 	{
 		short MaxUserCount;
@@ -66,15 +69,15 @@ namespace NCommon
 	};
 
 
-	
+
 	//- 로비에서 나가기 요청
 	struct PktLobbyLeaveReq {};
 
 	struct PktLobbyLeaveRes : PktBase
 	{
 	};
-	
-	
+
+
 
 	//- 룸에 들어가기 요청
 	const int MAX_ROOM_TITLE_SIZE = 16;
@@ -90,14 +93,22 @@ namespace NCommon
 		long long RoomUserUniqueId;
 	};
 
-		
+
 	//- 룸에 있는 유저에게 새로 들어온 유저 정보 통보
 	struct PktRoomEnterUserInfoNtf
 	{
 		// uniqueId 추가.
 		int UserUniqueId;
-		__int8 length;
+		//__int8 length;
 		char UserID[MAX_USER_ID_SIZE + 1] = { 0, };
+	};
+
+	const int MAX_ROOM_USER_COUNT = 4;
+	//- 룸에 있는 유저들 정보 가져옴.
+	struct PktRoomUserInfoNtf
+	{
+		int UserCount;
+		PktRoomEnterUserInfoNtf roomUserInfo[MAX_ROOM_USER_COUNT];
 	};
 
 
@@ -128,7 +139,9 @@ namespace NCommon
 
 	struct PktRoomChatNtf
 	{
-		char UserID[MAX_USER_ID_SIZE + 1] = { 0, };
+		//char UserID[MAX_USER_ID_SIZE + 1] = { 0, };
+		int UserUniqueId;
+		int msgLen;
 		wchar_t Msg[MAX_ROOM_CHAT_MSG_SIZE + 1] = { 0, };
 	};
 

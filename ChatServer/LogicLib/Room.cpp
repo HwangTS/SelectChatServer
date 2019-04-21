@@ -105,31 +105,14 @@ namespace NLogicLib
 
 	void Room::SendToAllUser(const short packetId, const short dataSize, char* pData, const int passUserindex)
 	{
-		if (packetId == (short)PACKET_ID::ROOM_ENTER_NEW_USER_NTF)
+		for (auto pUser : m_UserList)
 		{
-			for (auto pUser : m_UserList)
-			{
-				// 자기 자신한테도 보낸다.
-				//if (pUser->GetIndex() == passUserindex) {
-				//	continue;
-				//}
+			// 자기 자신한테도 보낸다.
+			//if (pUser->GetIndex() == passUserindex) {
+			//	continue;
+			//}
 
-				m_pRefNetwork->SendData(pUser->GetSessioIndex(), packetId, dataSize, pData);
-			}
-		}
-		// TODO : 190416
-		// 기존 유저 알람 패킷 작업해야할 차례. 이것이 해결이 되어야 채팅을 할 수 있다. 유저정보를 유지해야하므로..
-		else if (packetId == (short)PACKET_ID::ROOM_USER_LIST_NTF)
-		{
-			for (auto pUser : m_UserList)
-			{
-				 //자기 자신한테는 보내지 않는다.
-				if (pUser->GetIndex() == passUserindex) {
-					continue;
-				}
-
-				m_pRefNetwork->SendData(pUser->GetSessioIndex(), packetId, dataSize, pData);
-			}
+			m_pRefNetwork->SendData(pUser->GetSessioIndex(), packetId, dataSize, pData);
 		}
 	}
 
@@ -137,12 +120,28 @@ namespace NLogicLib
 	{
 		NCommon::PktRoomEnterUserInfoNtf pkt;
 		pkt.UserUniqueId = userIndex;
-		pkt.length = NCommon::MAX_USER_ID_SIZE;
+		//pkt.length = NCommon::MAX_USER_ID_SIZE;
 		strncpy_s(pkt.UserID, _countof(pkt.UserID), pszUserID, NCommon::MAX_USER_ID_SIZE);
 
 		SendToAllUser((short)PACKET_ID::ROOM_ENTER_NEW_USER_NTF, sizeof(pkt), (char*)&pkt, userIndex);
+	}
 
-		SendToAllUser((short)PACKET_ID::ROOM_USER_LIST_NTF, sizeof(pkt), (char*)&pkt, userIndex);
+	// TODO : 190416
+	// 기존 유저 알람 패킷 작업해야할 차례. 이것이 해결이 되어야 채팅을 할 수 있다. 유저정보를 유지해야하므로..
+	// room안의 유저를 알려줌.
+	void Room::NotifyRoomUserInfo(const int sessionIndex, const int userCount, const std::vector<User*>& userList)
+	{
+		NCommon::PktRoomUserInfoNtf pkt;		
+
+		pkt.UserCount = userCount;
+		
+		for (int i = 0; i < userCount; i++)
+		{
+			pkt.roomUserInfo[i].UserUniqueId = userList[i]->GetIndex();
+			strncpy_s(pkt.roomUserInfo[i].UserID, _countof(pkt.roomUserInfo[i].UserID), userList[i]->GetID().c_str(), NCommon::MAX_USER_ID_SIZE);
+		}
+
+		m_pRefNetwork->SendData(sessionIndex, (short)PACKET_ID::ROOM_USER_LIST_NTF, sizeof(pkt), (char*)& pkt);
 	}
 
 	void Room::NotifyLeaveUserInfo(const char* pszUserID)
@@ -157,10 +156,13 @@ namespace NLogicLib
 		SendToAllUser((short)PACKET_ID::ROOM_LEAVE_USER_NTF, sizeof(pkt), (char*)&pkt);
 	}
 
-	void Room::NotifyChat(const int sessionIndex, const char* pszUserID, const wchar_t* pszMsg)
+	//void Room::NotifyChat(const int sessionIndex, const char* pszUserID, const wchar_t* pszMsg)
+	void Room::NotifyChat(const int sessionIndex, const int userUniqueId, const wchar_t* pszMsg)
 	{
 		NCommon::PktRoomChatNtf pkt;
-		strncpy_s(pkt.UserID, _countof(pkt.UserID), pszUserID, NCommon::MAX_USER_ID_SIZE);
+		//strncpy_s(pkt.UserID, _countof(pkt.UserID), pszUserID, NCommon::MAX_USER_ID_SIZE);
+		pkt.UserUniqueId = userUniqueId;
+		pkt.msgLen = static_cast<int>(wcslen(pszMsg));
 		wcsncpy_s(pkt.Msg, NCommon::MAX_ROOM_CHAT_MSG_SIZE + 1, pszMsg, NCommon::MAX_ROOM_CHAT_MSG_SIZE);
 
 		SendToAllUser((short)PACKET_ID::ROOM_CHAT_NTF, sizeof(pkt), (char*)&pkt, sessionIndex);

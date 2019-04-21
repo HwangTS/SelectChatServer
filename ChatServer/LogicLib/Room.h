@@ -60,7 +60,13 @@ namespace NLogicLib
 
 		void NotifyLeaveUserInfo(const char* pszUserID);
 
-		void NotifyChat(const int sessionIndex, const char* pszUserID, const wchar_t* pszMsg);
+		//void NotifyChat(const int sessionIndex, const char* pszUserID, const wchar_t* pszMsg);
+		void NotifyChat(const int sessionIndex, const int userUniqueId, const wchar_t* pszMsg);
+
+		// userlist notify ( get room user infomation )
+		void NotifyRoomUserInfo(const int sessionIndex, const int userCount, const std::vector<User*>& userList);
+
+		std::vector<User*> GetUserList() { return m_UserList;  }
 
 	private:
 		ILog* m_pRefLogger;

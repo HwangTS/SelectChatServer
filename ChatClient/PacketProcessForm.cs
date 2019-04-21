@@ -22,8 +22,10 @@ namespace csharp_test_client
             PacketFuncDic.Add(PACKET_ID.ROOM_ENTER_RES, PacketProcess_RoomEnterResponse);
             PacketFuncDic.Add(PACKET_ID.ROOM_USER_LIST_NTF, PacketProcess_RoomUserListNotify);
             PacketFuncDic.Add(PACKET_ID.ROOM_NEW_USER_NTF, PacketProcess_RoomNewUserNotify);
+
             PacketFuncDic.Add(PACKET_ID.ROOM_LEAVE_RES, PacketProcess_RoomLeaveResponse);
             PacketFuncDic.Add(PACKET_ID.ROOM_LEAVE_USER_NTF, PacketProcess_RoomLeaveUserNotify);
+
             PacketFuncDic.Add(PACKET_ID.ROOM_CHAT_RES, PacketProcess_RoomChatResponse);            
             PacketFuncDic.Add(PACKET_ID.ROOM_CHAT_NOTIFY, PacketProcess_RoomChatNotify);
             //PacketFuncDic.Add(PACKET_ID.PACKET_ID_ROOM_RELAY_NTF, PacketProcess_RoomRelayNotify);
@@ -70,7 +72,7 @@ namespace csharp_test_client
             responsePkt.FromBytes(bodyData);
 
             for(int i = 0; i < responsePkt.LobbyCount; i++)
-                listBoxLobby.Items.Add(responsePkt.lobbyListinfo[i]);
+                listBoxLobby.Items.Add(responsePkt.lobbyListinfo[i].GetValue());
 
             DevLog.Write($"로비 요청 결과:  {(ERROR_CODE)responsePkt.Result}");
         }
@@ -84,6 +86,7 @@ namespace csharp_test_client
             DevLog.Write($"로비 입장 결과:  {(ERROR_CODE)responsePkt.Result}");
         }
 
+        // RoomEnter
         void PacketProcess_RoomEnterResponse(byte[] bodyData)
         {
             var responsePkt = new RoomEnterResPacket();
@@ -100,7 +103,15 @@ namespace csharp_test_client
 
             for (int i = 0; i < notifyPkt.UserCount; ++i)
             {
-                AddRoomUserList(notifyPkt.UserUniqueIdList[i], notifyPkt.UserIDList[i]);
+                // \0 종료문자 이전까지 정리하기.
+                int pos = notifyPkt.UserIDList[i].IndexOf('\0');
+                if (pos > 0)
+                    notifyPkt.UserIDList[i] = notifyPkt.UserIDList[i].Substring(0, pos);
+
+                // 자기 자신의 아이디는 접속할때 띄워주므로 여기선 pass한다.
+                //if(textBoxUserID.Text != notifyPkt.UserIDList[i])
+                if (!(textBoxUserID.Text.Equals(notifyPkt.UserIDList[i])))
+                    AddRoomUserList(notifyPkt.UserUniqueIdList[i], notifyPkt.UserIDList[i]);
             }
 
             DevLog.Write($"방의 기존 유저 리스트 받음");

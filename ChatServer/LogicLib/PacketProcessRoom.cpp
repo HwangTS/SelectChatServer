@@ -88,6 +88,14 @@ namespace NLogicLib
 		// 룸에 새 유저 들어왔다고 알린다
 		pRoom->NotifyEnterUserInfo(pUser->GetIndex(), pUser->GetID().c_str());
 
+		// 방에 혼자일땐 하지 않는다.
+		if (pRoom->GetUserCount() > 1)
+		{
+			pRoom->NotifyRoomUserInfo(pUser->GetSessioIndex(), pRoom->GetUserCount(), pRoom->GetUserList());
+		}
+
+		// 이 유저가 가진 정보를 토대로 룸 정보에서 유저 정보를 빼오자.
+
 		// res value setting.
 		resPkt.ErrorCode = (short)enterRet;
 		resPkt.RoomUserUniqueId = pUser->GetIndex();
@@ -181,7 +189,8 @@ namespace NLogicLib
 			CHECK_ERROR(ERROR_CODE::ROOM_ENTER_INVALID_ROOM_INDEX);
 		}
 
-		pRoom->NotifyChat(pUser->GetSessioIndex(), pUser->GetID().c_str(), reqPkt->Msg);
+		//pRoom->NotifyChat(pUser->GetSessioIndex(), pUser->GetID().c_str(), reqPkt->Msg);
+		pRoom->NotifyChat(pUser->GetSessioIndex(), pUser->GetIndex(), reqPkt->Msg);
 				
 		m_pRefNetwork->SendData(packetInfo.SessionIndex, (short)PACKET_ID::ROOM_CHAT_RES, sizeof(resPkt), (char*)&resPkt);
 		return ERROR_CODE::NONE;
